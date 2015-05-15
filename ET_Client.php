@@ -262,6 +262,10 @@ class ET_Client extends SoapClient {
 		return $this->endpoint;
 	}
 
+    function setEndpoint($endpoint) {
+        $this->endpoint = $endpoint;
+    }
+
 	function AddSubscriberToList($emailAddress, $listIDs, $subscriberKey = null){                   
 		$newSub = new ET_Subscriber;
 		$newSub->authStub = $this;

@@ -54,18 +54,8 @@ class ET_Client extends SoapClient {
 		}		
 		$this->refreshToken();
 
-		try {
-			$url = "https://www.exacttargetapis.com/platform/v1/endpoints/soap?access_token=".$this->getAuthToken($this->tenantKey);
-			$endpointResponse = restGet($url);			
-			$endpointObject = json_decode($endpointResponse->body);			
-			if ($endpointObject && property_exists($endpointObject,"url")){
-				$this->endpoint = $endpointObject->url;			
-			} else {
-				throw new Exception('Unable to determine stack using /platform/v1/endpoints/:'.$endpointResponse->body);			
-			}
-			} catch (Exception $e) {
-			throw new Exception('Unable to determine stack using /platform/v1/endpoints/: '.$e->getMessage());
-		} 		
+        $this->loadEndpoint();
+
 		parent::__construct($this->xmlLoc, array('trace'=>1, 'exceptions'=>0,'connection_timeout'=>120));
 		parent::__setLocation($this->endpoint);
 	}
@@ -112,6 +102,21 @@ class ET_Client extends SoapClient {
 			}
 		} catch (Exception $e) {
 			throw new Exception('Unable to validate App Keys(ClientID/ClientSecret) provided.: '.$e->getMessage());
+		}
+	}
+
+	function loadEndpoint() {
+		try {
+			$url = "https://www.exacttargetapis.com/platform/v1/endpoints/soap?access_token=".$this->getAuthToken($this->tenantKey);
+			$endpointResponse = restGet($url);
+			$endpointObject = json_decode($endpointResponse->body);
+			if ($endpointObject && property_exists($endpointObject,"url")){
+				$this->endpoint = $endpointObject->url;
+			} else {
+				throw new Exception('Unable to determine stack using /platform/v1/endpoints/:'.$endpointResponse->body);
+			}
+		} catch (Exception $e) {
+			throw new Exception('Unable to determine stack using /platform/v1/endpoints/: '.$e->getMessage());
 		}
 	}
 	
@@ -251,7 +256,11 @@ class ET_Client extends SoapClient {
 		return isset($this->tenantTokens[$tenantKey]['refreshToken']) 
 			? $this->tenantTokens[$tenantKey]['refreshToken']
 			: null;
-	}	
+	}
+
+	function getEndpoint() {
+		return $this->endpoint;
+	}
 
 	function AddSubscriberToList($emailAddress, $listIDs, $subscriberKey = null){                   
 		$newSub = new ET_Subscriber;

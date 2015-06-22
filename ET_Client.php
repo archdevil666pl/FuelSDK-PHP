@@ -97,6 +97,7 @@ class ET_Client extends SoapClient {
 						$this->setRefreshToken($this->tenantKey, $authObject->refreshToken);
 					}
 				} else {
+					$this->setRefreshToken($this->tenantKey, null);
 					throw new Exception('Unable to validate App Keys(ClientID/ClientSecret) provided, requestToken response:'.$authResponse->body );			
 				}				
 			}

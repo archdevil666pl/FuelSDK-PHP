@@ -56,7 +56,7 @@ class ET_Client extends SoapClient {
 
         $this->loadEndpoint();
 
-		parent::__construct($this->xmlLoc, array('trace'=>1, 'exceptions'=>0,'connection_timeout'=>120));
+		parent::__construct($this->xmlLoc, array('trace'=>1, 'exceptions'=>0,'connection_timeout'=>3600));
 		parent::__setLocation($this->endpoint);
 	}
 	

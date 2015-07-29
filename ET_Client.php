@@ -4,7 +4,7 @@ require('JWT.php');
 
 class ET_Client extends SoapClient {
 	public $packageName, $packageFolders, $parentFolders;
-	private $wsdlLoc, $debugSOAP, $lastHTTPCode, $clientId, 
+	private $wsdlLoc, $debugSOAP, $errorLogging, $lastHTTPCode, $clientId,
 			$clientSecret, $appsignature, $endpoint, 
 			$tenantTokens, $tenantKey, $xmlLoc;
 		
@@ -23,6 +23,7 @@ class ET_Client extends SoapClient {
 			$this->clientSecret = $config['clientsecret'];
 			$this->appsignature = $config['appsignature'];
 			if (array_key_exists('xmlloc', $config)){$this->xmlLoc = $config['xmlloc'];}
+			if (array_key_exists('errorLogging', $config)){$this->errorLogging = $config['errorLogging'];}
 		} else {
 			if ($params && array_key_exists('defaultwsdl', $params)){$this->wsdlLoc = $params['defaultwsdl'];}
 			else {$this->wsdlLoc = "https://webservice.exacttarget.com/etframework.wsdl";}
@@ -30,6 +31,7 @@ class ET_Client extends SoapClient {
 			if ($params && array_key_exists('clientsecret', $params)){$this->clientSecret = $params['clientsecret'];}
 			if ($params && array_key_exists('appsignature', $params)){$this->appsignature = $params['appsignature'];}
 			if ($params && array_key_exists('xmlloc', $params)){$this->xmlLoc = $params['xmlloc'];}
+			if ($params && array_key_exists('errorLogging', $params)){$this->errorLogging = $params['errorLogging'];}
 		}
 		
 		$this->debugSOAP = $debug;
@@ -177,7 +179,7 @@ class ET_Client extends SoapClient {
 		$content = $objWSSE->saveXML();
 		$content_length = strlen($content); 
 		if ($this->debugSOAP){
-			error_log ('FuelSDK SOAP Request: ');
+			error_log ('['.date('Y-m-d H:i:s').'] FuelSDK SOAP Request: ');
 			error_log (str_replace($this->getInternalAuthToken($this->tenantKey),"REMOVED",$content));
 		}
 		
@@ -192,6 +194,15 @@ class ET_Client extends SoapClient {
 		curl_setopt($ch, CURLOPT_USERAGENT, "FuelSDK-PHP-v0.9");
 		$output = curl_exec($ch);
 		$this->lastHTTPCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+		if ($this->debugSOAP || !$this->errorLogging) {
+			// prevent double error logging
+		} else if (curl_getinfo($ch, CURLINFO_SSL_VERIFYRESULT) !== 0) {
+			error_log ('['.date('Y-m-d H:i:s').'] FuelSDK cURL failure, errno: ' . curl_getinfo($ch, CURLINFO_SSL_VERIFYRESULT));
+			error_log (str_replace($this->getInternalAuthToken($this->tenantKey),"REMOVED",$content));
+		} else if ($this->lastHTTPCode !== 200) {
+			error_log ('['.date('Y-m-d H:i:s').'] FuelSDK SOAP failure, HTTP code: ' . $this->lastHTTPCode);
+			error_log (str_replace($this->getInternalAuthToken($this->tenantKey),"REMOVED",$content));
+		}
 		curl_close($ch); 
 						
 		return $output;

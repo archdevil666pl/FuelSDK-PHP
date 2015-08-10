@@ -196,8 +196,10 @@ class ET_Client extends SoapClient {
 		$this->lastHTTPCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 		if ($this->debugSOAP || !$this->errorLogging) {
 			// prevent double error logging
-		} else if (curl_getinfo($ch, CURLINFO_SSL_VERIFYRESULT) !== 0) {
+		} else if (curl_getinfo($ch, CURLINFO_SSL_VERIFYRESULT) !== 0 || !is_string($output)) {
 			error_log ('['.date('Y-m-d H:i:s').'] FuelSDK cURL failure, errno: ' . curl_getinfo($ch, CURLINFO_SSL_VERIFYRESULT));
+			error_log('Location: ' . $location);
+			error_log('Headers: ' . implode(';', $headers));
 			error_log (str_replace($this->getInternalAuthToken($this->tenantKey),"REMOVED",$content));
 		} else if ($this->lastHTTPCode !== 200) {
 			error_log ('['.date('Y-m-d H:i:s').'] FuelSDK SOAP failure, HTTP code: ' . $this->lastHTTPCode);
